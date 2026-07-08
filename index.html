@@ -361,6 +361,7 @@ body {
   gap: 8px;
   margin-top: 12px;
   justify-content: center;
+  align-items: center;
 }
 
 .welcome-chips .chip {
@@ -491,7 +492,7 @@ body {
 
 .input-row {
   display: flex;
-  align-items: flex-end;
+  align-items: center;
   gap: 8px;
 }
 
@@ -600,7 +601,8 @@ body {
   border-bottom: 0.5px solid rgba(0, 0, 0, 0.04);
   display: flex;
   align-items: center;
-  gap: 8px;
+  justify-content: center;
+  position: relative;
   flex-shrink: 0;
 }
 
@@ -617,6 +619,8 @@ body {
   align-items: center;
   justify-content: center;
   transition: var(--transition);
+  position: absolute;
+  left: 16px;
 }
 
 .page-header .back-btn:active {
@@ -1108,7 +1112,7 @@ body {
           <button class="voice-btn" onclick="showToast('语音功能即将上线')" title="语音">
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" y1="19" x2="12" y2="23"/><line x1="8" y1="23" x2="16" y2="23"/></svg>
           </button>
-          <textarea id="userInput" rows="1" placeholder="问问家里的东西，例如：空调E3是什么意思？" 
+          <textarea id="userInput" rows="1" placeholder="问问家里的东西" 
             oninput="autoResize(this); toggleSendBtn()" 
             onkeydown="handleInputKeydown(event)"></textarea>
           <button class="send-btn disabled" id="sendBtn" onclick="sendMessage()">
