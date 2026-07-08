@@ -1,0 +1,2157 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>我家的说明书AI</title>
+<style>
+*, *::before, *::after {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+:root {
+  --primary: #007AFF;
+  --primary-light: #E8F0FE;
+  --bg: #F7F8FA;
+  --white: #FFFFFF;
+  --text: #1D1D1F;
+  --text-secondary: #8E8E93;
+  --text-tertiary: #C7C7CC;
+  --border: #E5E5EA;
+  --danger: #FF3B30;
+  --danger-light: #FFECEB;
+  --warning: #FF9500;
+  --warning-light: #FFF4E5;
+  --success: #34C759;
+  --shadow-sm: 0 -2px 12px rgba(0,0,0,0.08);
+  --shadow-md: 0 2px 8px rgba(0,0,0,0.12);
+  --shadow-lg: 0 8px 24px rgba(0,0,0,0.15);
+  --radius: 12px;
+  --radius-sm: 8px;
+  --radius-lg: 16px;
+  --transition: all 0.3s cubic-bezier(0.25, 0.1, 0.25, 1);
+}
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  overflow: hidden;
+  height: 100vh;
+  height: 100dvh;
+}
+
+/* ====== App Container ====== */
+.app {
+  max-width: 480px;
+  margin: 0 auto;
+  height: 100vh;
+  height: 100dvh;
+  position: relative;
+  background: var(--bg);
+  overflow: hidden;
+}
+
+/* ====== Page Base ====== */
+.page {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: var(--bg);
+  opacity: 0;
+  transform: translateX(100%);
+  transition: var(--transition);
+  pointer-events: none;
+  z-index: 1;
+}
+
+.page.active {
+  opacity: 1;
+  transform: translateX(0);
+  pointer-events: auto;
+  z-index: 10;
+}
+
+.page.slide-out-left {
+  opacity: 0.5;
+  transform: translateX(-30%);
+  z-index: 5;
+  pointer-events: none;
+}
+
+/* ====== Chat Page ====== */
+.chat-page {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  z-index: 10;
+}
+
+.chat-page.active {
+  opacity: 1;
+  transform: translateX(0);
+}
+
+/* Header - centered text layout with frosted glass */
+.chat-header {
+  background: rgba(247, 248, 250, 0.72);
+  backdrop-filter: blur(20px) saturate(180%);
+  -webkit-backdrop-filter: blur(20px) saturate(180%);
+  padding: 16px 16px 12px;
+  border-bottom: 0.5px solid rgba(0, 0, 0, 0.04);
+  flex-shrink: 0;
+  text-align: center;
+  animation: pageLoadIn 0.3s ease-out;
+  position: relative;
+  z-index: 5;
+}
+
+.chat-header h1 {
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--text);
+  letter-spacing: 0.2px;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.chat-header .app-logo {
+  width: 24px;
+  height: 24px;
+  vertical-align: middle;
+}
+
+.chat-header p {
+  font-size: 13px;
+  color: #8E8E93;
+  margin-top: 4px;
+  display: block;
+}
+
+/* Messages Area */
+.messages-area {
+  flex: 1;
+  overflow-y: auto;
+  padding: 16px;
+  padding-bottom: 8px;
+  -webkit-overflow-scrolling: touch;
+  scroll-behavior: smooth;
+}
+
+.messages-area::-webkit-scrollbar {
+  width: 0;
+}
+
+/* Message Bubbles */
+.message {
+  display: flex;
+  margin-bottom: 12px;
+  animation: msgFadeIn 0.25s ease-out;
+}
+
+@keyframes msgFadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes pageLoadIn {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes btnTap {
+  0% { transform: scale(1); }
+  100% { transform: scale(0.97); }
+}
+
+.message.user {
+  justify-content: flex-end;
+}
+
+.message.ai {
+  justify-content: flex-start;
+}
+
+.message .bubble {
+  max-width: 85%;
+  padding: 12px 16px;
+  font-size: 14px;
+  line-height: 1.6;
+  word-break: break-word;
+}
+
+.message.user .bubble {
+  background: var(--primary);
+  color: var(--white);
+  border-radius: var(--radius) var(--radius) 4px var(--radius);
+}
+
+.message.ai .bubble {
+  background: rgba(255, 255, 255, 0.78);
+  backdrop-filter: blur(8px) saturate(140%);
+  -webkit-backdrop-filter: blur(8px) saturate(140%);
+  color: var(--text);
+  border-radius: var(--radius) var(--radius) var(--radius) 4px;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.04);
+}
+
+/* Welcome bubble: uniform rounded corners (it's a card, not a speech bubble) */
+.welcome-bubble {
+  border-radius: var(--radius) !important;
+}
+
+
+
+/* AI Answer Structure */
+.ai-answer .device-tag {
+  display: inline-block;
+  background: var(--primary-light);
+  color: var(--primary);
+  font-size: 12px;
+  font-weight: 500;
+  padding: 4px 10px;
+  border-radius: 20px;
+  margin-bottom: 12px;
+}
+
+.ai-answer .answer-section {
+  margin-bottom: 12px;
+}
+
+.ai-answer .answer-section:last-child {
+  margin-bottom: 0;
+}
+
+.ai-answer .section-title {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text);
+  margin-bottom: 8px;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.ai-answer .section-title .icon {
+  font-size: 14px;
+}
+
+.ai-answer ul {
+  list-style: none;
+  padding: 0;
+}
+
+.ai-answer ul li {
+  font-size: 13px;
+  line-height: 1.7;
+  color: #3A3A3C;
+  padding-left: 18px;
+  position: relative;
+  margin-bottom: 4px;
+}
+
+.ai-answer ul li::before {
+  content: '';
+  position: absolute;
+  left: 2px;
+  top: 9px;
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: var(--primary);
+  opacity: 0.5;
+}
+
+.ai-answer ol {
+  list-style: none;
+  padding: 0;
+  counter-reset: step;
+}
+
+.ai-answer ol li {
+  font-size: 13px;
+  line-height: 1.7;
+  color: #3A3A3C;
+  padding-left: 26px;
+  position: relative;
+  margin-bottom: 6px;
+  counter-increment: step;
+}
+
+.ai-answer ol li::before {
+  content: counter(step);
+  position: absolute;
+  left: 0;
+  top: 1px;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: var(--primary);
+  color: var(--white);
+  font-size: 11px;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 18px;
+  text-align: center;
+}
+
+.ai-answer .after-sales {
+  background: var(--warning-light);
+  border-left: 3px solid var(--warning);
+  padding: 10px 12px;
+  border-radius: var(--radius-sm);
+  font-size: 13px;
+  color: #6D4C00;
+  line-height: 1.6;
+}
+
+.ai-answer .after-sales.danger {
+  background: var(--danger-light);
+  border-left-color: var(--danger);
+  color: #691717;
+}
+
+.ai-answer .bind-prompt {
+  background: var(--primary-light);
+  padding: 10px 12px;
+  border-radius: var(--radius-sm);
+  font-size: 13px;
+  color: var(--primary);
+  line-height: 1.6;
+  margin-top: 8px;
+  cursor: pointer;
+  transition: var(--transition);
+}
+
+.ai-answer .bind-prompt:hover {
+  background: #D6E4FC;
+}
+
+.ai-answer .off-topic {
+  font-size: 14px;
+  line-height: 1.7;
+  color: #3A3A3C;
+}
+
+/* Welcome Chips - pill/chip style */
+.welcome-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 12px;
+  justify-content: center;
+}
+
+.welcome-chips .chip {
+  background: rgba(255, 255, 255, 0.65);
+  backdrop-filter: blur(8px) saturate(140%);
+  -webkit-backdrop-filter: blur(8px) saturate(140%);
+  border: 1px solid rgba(255, 255, 255, 0.5);
+  padding: 8px 16px;
+  border-radius: 20px;
+  font-size: 13px;
+  color: #333;
+  cursor: pointer;
+  transition: var(--transition);
+  user-select: none;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.04);
+}
+
+.welcome-chips .chip:hover {
+  border-color: var(--primary);
+  color: var(--primary);
+}
+
+.welcome-chips .chip:active {
+  transform: scale(0.97);
+  animation: none;
+}
+
+/* Loading Indicator - pulsing dots */
+.loading-indicator {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 8px 0;
+}
+
+.loading-indicator .dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--text-tertiary);
+  animation: dotPulse 1.2s ease-in-out infinite;
+}
+
+.loading-indicator .dot:nth-child(2) {
+  animation-delay: 0.2s;
+}
+
+.loading-indicator .dot:nth-child(3) {
+  animation-delay: 0.4s;
+}
+
+@keyframes dotPulse {
+  0%, 80%, 100% {
+    transform: scale(0.6);
+    opacity: 0.4;
+  }
+  40% {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+.loading-text {
+  font-size: 13px;
+  color: var(--text-tertiary);
+  margin-left: 6px;
+}
+
+/* ====== Bottom Area (device link + floating input) ====== */
+.bottom-area {
+  flex-shrink: 0;
+  padding: 0 16px 16px;
+  padding-bottom: calc(16px + env(safe-area-inset-bottom, 0px));
+  background: rgba(247, 248, 250, 0.72);
+  backdrop-filter: blur(20px) saturate(180%);
+  -webkit-backdrop-filter: blur(20px) saturate(180%);
+  border-top: 0.5px solid rgba(0, 0, 0, 0.04);
+}
+
+/* "我家的设备" link - above input, subtle text */
+.device-link-row {
+  text-align: center;
+  padding: 4px 0 8px;
+}
+
+.device-link-btn {
+  background: none;
+  border: none;
+  font-size: 13px;
+  color: #8E8E93;
+  cursor: pointer;
+  padding: 4px 12px;
+  font-family: inherit;
+  transition: color 0.15s ease;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.device-link-btn:active {
+  color: var(--primary);
+}
+
+.device-link-btn .tab-icon {
+  font-size: 15px;
+  vertical-align: middle;
+  display: inline-flex;
+}
+
+/* Input Bar - floating card with glassmorphism */
+.input-bar {
+  background: rgba(255, 255, 255, 0.65);
+  border-radius: 14px;
+  border: 1px solid rgba(255, 255, 255, 0.5);
+  padding: 10px 10px 10px 6px;
+  box-shadow: 0 -2px 12px rgba(0,0,0,0.06), 0 4px 12px rgba(0,0,0,0.04);
+  backdrop-filter: blur(16px) saturate(160%);
+  -webkit-backdrop-filter: blur(16px) saturate(160%);
+  transition: border-color 0.2s ease, box-shadow 0.2s ease, background 0.2s ease;
+}
+
+.input-bar.focused {
+  background: rgba(255, 255, 255, 0.88);
+  border-color: rgba(0, 122, 255, 0.35);
+  box-shadow: 0 -2px 12px rgba(0,0,0,0.06), 0 4px 12px rgba(0,0,0,0.04), 0 0 0 3px rgba(0,122,255,0.1);
+}
+
+.input-row {
+  display: flex;
+  align-items: flex-end;
+  gap: 8px;
+}
+
+.input-row textarea {
+  flex: 1;
+  border: none;
+  border-radius: 14px;
+  padding: 12px 14px;
+  font-size: 14px;
+  font-family: inherit;
+  color: var(--text);
+  background: rgba(247, 248, 250, 0.5);
+  resize: none;
+  outline: none;
+  min-height: 40px;
+  max-height: 100px;
+  line-height: 1.4;
+  transition: background 0.2s ease;
+}
+
+.input-bar.focused .input-row textarea {
+  background: rgba(255, 255, 255, 0.6);
+}
+
+.input-row textarea::placeholder {
+  color: var(--text-tertiary);
+}
+
+/* Voice button - small icon inside left edge */
+.input-row .voice-btn {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  border: none;
+  background: rgba(247, 248, 250, 0.4);
+  backdrop-filter: blur(4px) saturate(140%);
+  -webkit-backdrop-filter: blur(4px) saturate(140%);
+  color: var(--text-secondary);
+  font-size: 20px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  transition: var(--transition);
+}
+
+.input-row .voice-btn:active {
+  color: var(--primary);
+  transform: scale(0.97);
+}
+
+/* Send button - separate circle, right side */
+.input-row .send-btn {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  border: none;
+  background: rgba(0, 122, 255, 0.88);
+  backdrop-filter: blur(4px) saturate(140%);
+  -webkit-backdrop-filter: blur(4px) saturate(140%);
+  color: var(--white);
+  font-size: 18px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  transition: var(--transition);
+}
+
+.input-row .send-btn:active {
+  background: #0056CC;
+  transform: scale(0.97);
+}
+
+.input-row .send-btn.disabled {
+  background: rgba(229, 229, 234, 0.65);
+  backdrop-filter: blur(4px) saturate(140%);
+  -webkit-backdrop-filter: blur(4px) saturate(140%);
+  cursor: default;
+}
+
+.input-row .send-btn.disabled:active {
+  transform: none;
+}
+
+/* Hide the old bottom-tab (it's now a link above input) */
+.bottom-tab {
+  display: none;
+}
+
+/* ====== Device Page ====== */
+.device-page {
+  display: flex;
+  flex-direction: column;
+  background: var(--bg);
+}
+
+.device-page .page-header {
+  background: rgba(255, 255, 255, 0.72);
+  backdrop-filter: blur(20px) saturate(180%);
+  -webkit-backdrop-filter: blur(20px) saturate(180%);
+  padding: 14px 16px;
+  border-bottom: 0.5px solid rgba(0, 0, 0, 0.04);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+.page-header .back-btn {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  border: none;
+  background: none;
+  color: var(--primary);
+  font-size: 20px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: var(--transition);
+}
+
+.page-header .back-btn:active {
+  background: var(--primary-light);
+  transform: scale(0.97);
+}
+
+.page-header .page-title {
+  font-size: 18px;
+  font-weight: 600;
+  color: var(--text);
+}
+
+.device-page .device-content {
+  flex: 1;
+  overflow-y: auto;
+  padding: 12px 16px 16px;
+  -webkit-overflow-scrolling: touch;
+}
+
+/* Device List */
+.device-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.device-card {
+  background: rgba(255, 255, 255, 0.78);
+  backdrop-filter: blur(8px) saturate(140%);
+  -webkit-backdrop-filter: blur(8px) saturate(140%);
+  border-radius: var(--radius);
+  padding: 14px 16px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  box-shadow: 0 1px 2px rgba(0,0,0,0.04);
+  transition: var(--transition);
+}
+
+.device-card:active {
+  transform: scale(0.995);
+}
+
+.device-card .device-icon {
+  width: 44px;
+  height: 44px;
+  border-radius: 10px;
+  background: var(--primary-light);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 22px;
+  flex-shrink: 0;
+}
+
+.device-card .device-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.device-card .device-name {
+  font-size: 15px;
+  font-weight: 500;
+  color: var(--text);
+}
+
+.device-card .device-model {
+  font-size: 12px;
+  color: var(--text-secondary);
+  margin-top: 2px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.device-card .device-remove {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  border: none;
+  background: rgba(247, 248, 250, 0.6);
+  backdrop-filter: blur(4px) saturate(140%);
+  -webkit-backdrop-filter: blur(4px) saturate(140%);
+  color: var(--text-tertiary);
+  font-size: 14px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  transition: var(--transition);
+}
+
+.device-card .device-remove:active {
+  background: var(--danger-light);
+  color: var(--danger);
+  transform: scale(0.97);
+}
+
+/* Empty State */
+.empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 60px 20px;
+  text-align: center;
+}
+
+.empty-state .empty-icon {
+  font-size: 56px;
+  margin-bottom: 20px;
+  opacity: 0.6;
+  color: var(--text-tertiary);
+}
+
+.empty-state .empty-title {
+  font-size: 17px;
+  font-weight: 600;
+  color: var(--text);
+  margin-bottom: 8px;
+}
+
+.empty-state .empty-desc {
+  font-size: 14px;
+  color: var(--text-secondary);
+  margin-bottom: 24px;
+}
+
+/* Buttons */
+.btn-primary {
+  background: var(--primary);
+  color: var(--white);
+  border: none;
+  padding: 12px 24px;
+  border-radius: var(--radius);
+  font-size: 15px;
+  font-weight: 500;
+  font-family: inherit;
+  cursor: pointer;
+  transition: var(--transition);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  min-height: 48px;
+}
+
+.btn-primary:active {
+  background: #0056CC;
+  transform: scale(0.97);
+  animation: none;
+}
+
+.btn-secondary {
+  background: rgba(255, 255, 255, 0.72);
+  backdrop-filter: blur(8px) saturate(140%);
+  -webkit-backdrop-filter: blur(8px) saturate(140%);
+  color: var(--primary);
+  border: 1px solid rgba(0, 122, 255, 0.25);
+  padding: 12px 24px;
+  border-radius: var(--radius);
+  font-size: 15px;
+  font-weight: 500;
+  font-family: inherit;
+  cursor: pointer;
+  transition: var(--transition);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+}
+
+.btn-secondary:active {
+  background: var(--primary-light);
+  transform: scale(0.97);
+  animation: none;
+}
+
+.btn-full {
+  width: 100%;
+}
+
+.btn-danger-text {
+  background: none;
+  border: none;
+  color: var(--danger);
+  font-size: 14px;
+  font-family: inherit;
+  cursor: pointer;
+  padding: 12px;
+  transition: var(--transition);
+}
+
+.btn-danger-text:active {
+  opacity: 0.6;
+}
+
+.device-page .actions-area {
+  padding: 16px;
+  flex-shrink: 0;
+  background: rgba(247, 248, 250, 0.72);
+  backdrop-filter: blur(20px) saturate(180%);
+  -webkit-backdrop-filter: blur(20px) saturate(180%);
+  border-top: 0.5px solid rgba(0, 0, 0, 0.04);
+}
+
+/* ====== Bind Device Page ====== */
+.bind-page {
+  display: flex;
+  flex-direction: column;
+  background: var(--bg);
+}
+
+.bind-page .bind-content {
+  flex: 1;
+  overflow-y: auto;
+  padding: 16px;
+  -webkit-overflow-scrolling: touch;
+}
+
+.bind-section {
+  background: rgba(255, 255, 255, 0.78);
+  backdrop-filter: blur(8px) saturate(140%);
+  -webkit-backdrop-filter: blur(8px) saturate(140%);
+  border-radius: var(--radius);
+  padding: 16px;
+  margin-bottom: 16px;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.04);
+}
+
+.bind-section .section-label {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text);
+  margin-bottom: 12px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.bind-section .section-label .icon {
+  font-size: 16px;
+}
+
+.photo-btn {
+  width: 100%;
+  background: rgba(232, 240, 254, 0.65);
+  backdrop-filter: blur(8px) saturate(140%);
+  -webkit-backdrop-filter: blur(8px) saturate(140%);
+  color: var(--primary);
+  border: 1.5px dashed rgba(0, 122, 255, 0.35);
+  padding: 20px;
+  border-radius: var(--radius);
+  font-size: 15px;
+  font-weight: 500;
+  font-family: inherit;
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  transition: var(--transition);
+}
+
+.photo-btn .photo-icon {
+  font-size: 32px;
+}
+
+.photo-btn:active {
+  background: #D6E4FC;
+  transform: scale(0.98);
+}
+
+.form-group {
+  margin-bottom: 14px;
+}
+
+.form-group:last-child {
+  margin-bottom: 0;
+}
+
+.form-group label {
+  display: block;
+  font-size: 13px;
+  color: var(--text-secondary);
+  margin-bottom: 6px;
+}
+
+.form-group label .required {
+  color: var(--danger);
+  margin-left: 2px;
+}
+
+/* Bind form inputs - same style as chat input (14px radius, #E5E5EA border) */
+.form-group input {
+  width: 100%;
+  border: 1px solid rgba(0, 0, 0, 0.06);
+  border-radius: 14px;
+  padding: 12px 14px;
+  font-size: 14px;
+  font-family: inherit;
+  color: var(--text);
+  background: rgba(255, 255, 255, 0.72);
+  backdrop-filter: blur(8px) saturate(140%);
+  -webkit-backdrop-filter: blur(8px) saturate(140%);
+  outline: none;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease, background 0.2s ease;
+}
+
+.form-group input:focus {
+  border-color: rgba(0, 122, 255, 0.45);
+  box-shadow: 0 0 0 3px rgba(0,122,255,0.1);
+  background: rgba(255, 255, 255, 0.9);
+}
+
+.form-group input::placeholder {
+  color: var(--text-tertiary);
+}
+
+.bind-page .bind-actions {
+  padding: 16px;
+  flex-shrink: 0;
+  background: rgba(247, 248, 250, 0.72);
+  backdrop-filter: blur(20px) saturate(180%);
+  -webkit-backdrop-filter: blur(20px) saturate(180%);
+  border-top: 0.5px solid rgba(0, 0, 0, 0.04);
+}
+
+/* ====== Confirmation Modal ====== */
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.4);
+  z-index: 100;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.25s ease;
+}
+
+.modal-overlay.active {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.modal-box {
+  background: rgba(255, 255, 255, 0.82);
+  backdrop-filter: blur(24px) saturate(160%);
+  -webkit-backdrop-filter: blur(24px) saturate(160%);
+  border-radius: var(--radius-lg);
+  width: 270px;
+  overflow: hidden;
+  transform: scale(0.9);
+  transition: transform 0.25s ease;
+  box-shadow: 0 20px 40px rgba(0,0,0,0.15);
+}
+
+.modal-overlay.active .modal-box {
+  transform: scale(1);
+}
+
+.modal-box .modal-title {
+  font-size: 17px;
+  font-weight: 600;
+  text-align: center;
+  padding: 20px 16px 8px;
+  color: var(--text);
+}
+
+.modal-box .modal-message {
+  font-size: 13px;
+  text-align: center;
+  padding: 0 16px 20px;
+  color: var(--text-secondary);
+  line-height: 1.5;
+}
+
+.modal-box .modal-actions {
+  border-top: 0.5px solid var(--border);
+  display: flex;
+}
+
+.modal-box .modal-actions button {
+  flex: 1;
+  border: none;
+  background: rgba(255, 255, 255, 0.4);
+  backdrop-filter: blur(8px) saturate(140%);
+  -webkit-backdrop-filter: blur(8px) saturate(140%);
+  font-size: 17px;
+  font-family: inherit;
+  padding: 12px;
+  cursor: pointer;
+  color: var(--primary);
+  transition: var(--transition);
+}
+
+.modal-box .modal-actions button:first-child {
+  border-right: 0.5px solid var(--border);
+  color: var(--text-secondary);
+}
+
+.modal-box .modal-actions button:active {
+  background: var(--bg);
+  transform: scale(0.97);
+}
+
+/* ====== Toast ====== */
+.toast {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%) scale(0.8);
+  background: rgba(30, 30, 30, 0.72);
+  backdrop-filter: blur(16px) saturate(140%);
+  -webkit-backdrop-filter: blur(16px) saturate(140%);
+  color: var(--white);
+  padding: 14px 24px;
+  border-radius: var(--radius);
+  font-size: 14px;
+  z-index: 200;
+  opacity: 0;
+  pointer-events: none;
+  transition: all 0.3s ease;
+  text-align: center;
+  max-width: 260px;
+  box-shadow: 0 8px 24px rgba(0,0,0,0.2);
+}
+
+.toast.active {
+  opacity: 1;
+  transform: translate(-50%, -50%) scale(1);
+}
+
+/* ====== Desktop Width ====== */
+@media (min-width: 481px) {
+  .app {
+    border-left: 0.5px solid var(--border);
+    border-right: 0.5px solid var(--border);
+  }
+}
+</style>
+</head>
+<body>
+<div class="app" id="app">
+
+  <!-- ====== Chat Page ====== -->
+  <div class="page chat-page active" id="chatPage">
+    <div class="chat-header">
+      <h1><img class="app-logo" src="logo.png" alt="">我家的说明书</h1>
+      <p>家里的东西不会用？直接问我</p>
+    </div>
+
+    <div class="messages-area" id="messagesArea">
+      <!-- Welcome Message -->
+      <div class="message ai">
+        <div class="bubble welcome-bubble" id="welcomeBubble">
+          <div>你好，我可以帮你理解和使用家里的各种物品。家电、数码、玩具、家居，直接问就行。</div>
+          <div class="welcome-chips" id="welcomeChips">
+            <div class="chip" onclick="sendChip(this)">&#10052;&#65039; 空调E3是什么意思</div>
+            <div class="chip" onclick="sendChip(this)">&#9749; 咖啡机怎么打奶泡</div>
+            <div class="chip" onclick="sendChip(this)">&#127912; 乐高说明书怎么看</div>
+            <div class="chip" onclick="sendChip(this)">&#128293; 热水器不加热怎么办</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="bottom-area">
+      <!-- "我家的设备" as subtle text link above input -->
+      <div class="device-link-row">
+        <button class="device-link-btn" onclick="navigateTo('devicePage')">
+          <span class="tab-icon">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>
+          </span>
+          我的说明书
+        </button>
+      </div>
+
+      <!-- Floating input card -->
+      <div class="input-bar" id="inputBar">
+        <div class="input-row">
+          <button class="voice-btn" onclick="showToast('语音功能即将上线')" title="语音">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" y1="19" x2="12" y2="23"/><line x1="8" y1="23" x2="16" y2="23"/></svg>
+          </button>
+          <textarea id="userInput" rows="1" placeholder="问问家里的东西，例如：空调E3是什么意思？" 
+            oninput="autoResize(this); toggleSendBtn()" 
+            onkeydown="handleInputKeydown(event)"></textarea>
+          <button class="send-btn disabled" id="sendBtn" onclick="sendMessage()">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Keep the bottom-tab in DOM for JS compatibility but hidden -->
+    <div class="bottom-tab">
+      <button class="device-tab-btn" onclick="navigateTo('devicePage')">
+        <span class="tab-icon">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="20" height="14" rx="2" ry="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>
+        </span>
+        我的说明书
+      </button>
+    </div>
+  </div>
+
+  <!-- ====== Device Page ====== -->
+  <div class="page device-page" id="devicePage">
+    <div class="page-header">
+      <button class="back-btn" onclick="navigateBack('devicePage')">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
+      </button>
+      <span class="page-title">我的说明书</span>
+    </div>
+
+    <div style="text-align:center;padding:8px 0 0;font-size:12px;color:#C7C7CC;">你的家庭物品资料都会保存在这里</div>
+    <div class="device-content" id="deviceContent">
+      <!-- Device list or empty state rendered here -->
+    </div>
+
+    <div class="actions-area" id="deviceActions">
+      <button class="btn-primary btn-full" onclick="navigateTo('bindPage', 'devicePage')">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+        添加我的物品
+      </button>
+      <div style="text-align:center;margin-top:8px;">
+        <button class="btn-danger-text" id="clearDataBtn" onclick="showClearDataModal()" style="display:none;font-size:12px;color:#C7C7CC;padding:8px;">清除数据</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ====== Bind Device Page ====== -->
+  <div class="page bind-page" id="bindPage">
+    <div class="page-header">
+      <button class="back-btn" onclick="navigateBack('bindPage')">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
+      </button>
+      <span class="page-title">添加物品</span>
+    </div>
+
+    <div class="bind-content">
+      <div style="text-align:center;padding:8px 0 16px;font-size:13px;color:var(--text-secondary);line-height:1.5;">
+        添加后，我可以根据你的物品提供更精准的帮助。
+      </div>
+      <div class="bind-section">
+        <div class="section-label">
+          <span class="icon">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
+          </span>
+          拍摄铭牌 / 说明书
+        </div>
+        <button class="photo-btn" onclick="simulatePhotoRecognition()">
+          <span class="photo-icon">
+            <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
+          </span>
+          拍摄后，AI帮你建立说明书
+        </button>
+      </div>
+
+      <div class="bind-section">
+        <div class="section-label">
+          <span class="icon">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+          </span>
+          手动输入
+        </div>
+        <div class="form-group">
+          <label>物品名称<span class="required">*</span></label>
+          <input type="text" id="bindDeviceName" placeholder="例如：客厅空调、乐高城堡" maxlength="20">
+        </div>
+        <div class="form-group">
+          <label>品牌</label>
+          <input type="text" id="bindDeviceBrand" placeholder="例如：美的" maxlength="15">
+        </div>
+        <div class="form-group">
+          <label>型号</label>
+          <input type="text" id="bindDeviceModel" placeholder="例如：KFR-35GW" maxlength="20">
+        </div>
+      </div>
+    </div>
+
+    <div class="bind-actions">
+      <button class="btn-primary btn-full" onclick="saveManualDevice()">保存</button>
+    </div>
+  </div>
+
+</div>
+
+<!-- ====== Modal ====== -->
+<div class="modal-overlay" id="modalOverlay" onclick="closeModalOutside(event)">
+  <div class="modal-box">
+    <div class="modal-title" id="modalTitle"></div>
+    <div class="modal-message" id="modalMessage"></div>
+    <div class="modal-actions">
+      <button id="modalCancel" onclick="closeModal()">取消</button>
+      <button id="modalConfirm" onclick="confirmModal()">确认</button>
+    </div>
+  </div>
+</div>
+
+<!-- ====== Toast ====== -->
+<div class="toast" id="toast"></div>
+
+<script>
+// ====== State ======
+var state = {
+  myDevices: [],
+  recentQuestions: [],
+  welcomeVisible: true,
+  currentPageStack: ['chatPage']
+};
+
+var modalCallback = null;
+var currentPageFrom = 'chatPage';
+
+// ====== Knowledge Base ======
+var knowledgeBase = {
+  '空调e3': {
+    device: '空调',
+    reasons: [
+      '室内温度传感器故障或接触不良',
+      '传感器线路断路或短路',
+      '主板温控检测电路异常'
+    ],
+    steps: [
+      '关闭空调电源，等待30秒后重新开机，查看是否恢复正常',
+      '检查室内机面板温度传感器探头是否松动或脱落',
+      '用万用表检测传感器阻值是否正常（25°C时约10kΩ）',
+      '检查传感器连接线是否有破损或鼠咬痕迹',
+      '若以上无法解决，联系售后更换传感器组件'
+    ],
+    needsRepair: true,
+    afterSales: 'E3故障通常需要更换温度传感器，建议联系品牌售后上门维修，维修费用一般在80-200元。'
+  },
+  '洗衣机不脱水': {
+    device: '洗衣机',
+    reasons: [
+      '衣物放置不均匀导致偏心保护',
+      '排水管堵塞或排水泵故障',
+      '安全门锁未锁紧或门锁损坏'
+    ],
+    steps: [
+      '打开机门，将衣物重新整理均匀后再次启动脱水程序',
+      '检查排水管是否弯折或堵塞，清理滤网和排水泵异物',
+      '确认机门已完全关紧，听到"咔嗒"锁门声后再启动',
+      '检查洗衣机是否放置平稳，调整底脚使水平仪气泡居中',
+      '若问题持续，可能是门锁开关或电脑板故障，需售后检修'
+    ],
+    needsRepair: true,
+    afterSales: '脱水故障涉及门锁和排水泵，不建议自行拆机维修，建议预约品牌官方维修人员上门检测。'
+  },
+  '咖啡机打奶泡': {
+    device: '咖啡机',
+    reasons: [
+      '牛奶温度不够或太高',
+      '蒸汽管角度和插入深度不正确',
+      '牛奶品种不合适或未使用冷藏牛奶'
+    ],
+    steps: [
+      '使用全脂冷藏牛奶（3-4°C效果最佳），倒满蒸汽杯约1/3',
+      '打开蒸汽开关，先排出管内冷凝水，直到喷出干燥蒸汽',
+      '将蒸汽管喷头浸入牛奶液面下约1cm，斜45度角导入牛奶',
+      '听到"嘶嘶"声后缓慢下移奶杯，保持旋涡状打发至60-65°C',
+      '关闭蒸汽，用湿布擦拭蒸汽管，轻敲奶杯排出大气泡即可拉花'
+    ],
+    needsRepair: false,
+    afterSales: '这是操作技巧问题，多加练习即可掌握。如果蒸汽管无蒸汽输出，可能是蒸汽管堵塞，可用针通孔清理或联系售后。'
+  },
+  '热水器不加热': {
+    device: '热水器',
+    reasons: [
+      '电源未接通或漏电保护器跳闸',
+      '温控器设定温度过低或温控器损坏',
+      '加热棒老化、水垢堆积导致效率下降'
+    ],
+    steps: [
+      '检查电源插头是否插紧，漏电保护插头上的复位按钮是否按下',
+      '确认温控器设定温度是否在40-60°C之间，调高温度试一下',
+      '观察加热指示灯是否亮起，不亮则可能是加热棒故障',
+      '关闭电源，拆下加热棒检查是否有严重水垢，可尝试用醋酸清洗',
+      '若加热棒烧毁或漏电保护器频繁跳闸，需更换配件或联系售后'
+    ],
+    needsRepair: true,
+    afterSales: '热水器涉及水电安全，不建议自行拆装内部零件。加热棒更换费用约100-300元，建议联系品牌售后上门服务。'
+  },
+  '路由器重置': {
+    device: '路由器',
+    reasons: [
+      '需要恢复出厂设置解决网络异常',
+      '忘记管理员密码需要重置',
+      '路由器固件异常或死机'
+    ],
+    steps: [
+      '找到路由器背面的 Reset 小孔（通常在电源接口附近）',
+      '路由器通电状态下，用牙签或回形针长按 Reset 键 5-10秒',
+      '观察路由器指示灯全部闪烁后恢复常亮，表示重置成功',
+      '用网线连接电脑和路由器LAN口，或连接默认WiFi（见底部标签）',
+      '打开浏览器访问 192.168.1.1 或 192.168.0.1，使用默认账号密码（admin/admin）重新配置'
+    ],
+    needsRepair: false,
+    afterSales: '重置后需要重新设置宽带账号密码和WiFi名称密码。如设置遇到问题，可联系宽带运营商远程指导。'
+  },
+  '乐高说明书': {
+    device: '乐高套装',
+    reasons: [
+      '说明页码与实际零件不对应',
+      '零件编号相似容易混淆',
+      '拼装步骤中零件方向判断困难'
+    ],
+    steps: [
+      '确认当前页面左上角的步骤编号（如"步骤 47/128"）',
+      '对照零件清单检查是否缺少零件，乐高通常多给几个备用零件',
+      '注意零件方向：带凸点的一面朝上，按图示箭头方向插入',
+      '如果某一步卡住，检查上一步是否完全拼紧，未拼紧会导致后续零件对不上',
+      '找不到某步骤时，可以拍当前半成品照片问我，我能帮你定位到对应页码'
+    ],
+    needsRepair: false,
+    afterSales: '乐高零件缺失可在官网申请补件（需要提供套装编号和零件编号）。常见套装的电子版说明书可在 lego.com 服务页面下载。'
+  },
+  '智能门锁': {
+    device: '智能门锁',
+    reasons: [
+      '电池电量不足导致无法开锁',
+      '指纹识别模块有污渍或手指潮湿',
+      '系统死机需要重启'
+    ],
+    steps: [
+      '使用应急钥匙（通常在门锁底部或侧面有钥匙孔）开门',
+      '更换门锁电池：打开内侧电池盖，更换4节或8节AA电池',
+      '用干布擦拭指纹识别区域，确保手指干燥清洁后重新录入指纹',
+      '长按门锁内侧的复位按钮（Reset）3-5秒恢复出厂设置',
+      '重新设置管理密码和指纹，建议录入2-3个手指作为备用'
+    ],
+    needsRepair: true,
+    afterSales: '智能门锁涉及家庭安全，如果多次重启后仍异常，建议联系品牌售后检修。电池仓位置和应急钥匙孔位置可在说明书"安装图示"章节查看。'
+  }
+};
+
+// Generic diagnoses
+var genericDiagnoses = {
+  '空调': {
+    keywords: ['空调', '制冷', '不冷', '吹风', '不工作', '关机', '故障'],
+    device: '空调',
+    reasons: [
+      '滤网堵塞导致通风不畅',
+      '制冷剂（氟利昂）不足或泄漏',
+      '室外机散热不良或被遮挡'
+    ],
+    steps: [
+      '清洗室内机滤网：打开面板取出滤网，用清水冲洗后晾干装回',
+      '检查室外机是否被阳光直射或有遮挡物，确保通风良好',
+      '设定温度是否合适（建议26°C），运行模式是否为"制冷"',
+      '观察室外机风扇是否正常运转，压缩机是否有异常噪音',
+      '若制冷效果持续不佳，可能是缺氟或压缩机故障，需联系售后加氟或检修'
+    ],
+    needsRepair: true,
+    afterSales: '空调维修涉及制冷系统和电气安全，建议联系品牌售后检测。加氟费用约100-300元，压缩机维修费用较高。'
+  },
+  '洗衣机': {
+    keywords: ['洗衣机', '不转', '不工作', '噪音', '漏水', '坏了', '故障'],
+    device: '洗衣机',
+    reasons: [
+      '衣物超载或程序选择不当',
+      '进水阀或排水阀故障',
+      '电机或皮带异常'
+    ],
+    steps: [
+      '减少衣物量至额定容量的70%以内，重新选择洗涤程序',
+      '检查进水水龙头是否打开，水压是否正常',
+      '观察是否显示错误代码，不同代码代表不同故障类型',
+      '检查洗衣机底部是否有漏水痕迹，排水管是否正常',
+      '若无法自行判断故障，建议联系售后专业检测'
+    ],
+    needsRepair: true,
+    afterSales: '洗衣机故障类型较多，建议联系品牌售后预约上门检测，避免自行拆机造成二次损坏。'
+  },
+  '热水器': {
+    keywords: ['热水器', '没热水', '不热', '凉水', '水温', '故障'],
+    device: '热水器',
+    reasons: [
+      '电源问题或漏电保护触发',
+      '温控设置异常',
+      '加热元件老化或损坏'
+    ],
+    steps: [
+      '检查电源插座是否有电，漏电保护器是否正常',
+      '确认温控温度设定是否合理（推荐50°C左右）',
+      '观察加热指示灯是否亮起，判断是否在加热状态',
+      '断电后检查加热棒连接线是否松动',
+      '若指示灯不亮或频繁跳闸，需更换配件，联系售后上门'
+    ],
+    needsRepair: true,
+    afterSales: '热水器维修涉及水电安全，请务必联系专业售后人员上门服务，切勿自行拆修。'
+  },
+  '净水器': {
+    device: '净水器',
+    reasons: [
+      '滤芯使用时间过长导致堵塞或失效',
+      '水压不足或进水管路有折弯',
+      '滤芯未及时更换，出水变慢或有异味'
+    ],
+    steps: [
+      '检查净水器指示灯是否亮起红灯或闪烁，提示需要更换滤芯',
+      '查看各滤芯的更换周期（PP棉3-6个月、活性炭6-12个月、RO膜2-3年），确认是否到期',
+      '关闭进水三通阀门，逆时针拧下旧滤芯，顺时针装入新滤芯',
+      '更换后打开进水阀门，让净水器冲洗5-10分钟排空新滤芯中的碳粉',
+      '若更换后出水仍异常，检查进水压力是否达标（一般要求0.15-0.4MPa），必要时加装增压泵'
+    ],
+    needsRepair: false,
+    afterSales: '滤芯品牌和型号在说明书"滤芯规格"章节标注。建议记录每次更换日期，设置日历提醒。原装滤芯可在品牌官网或天猫旗舰店购买。'
+  },
+  '扫地机器人': {
+    device: '扫地机器人',
+    reasons: [
+      '传感器（悬崖传感器/碰撞传感器）被灰尘覆盖导致异常',
+      '边刷或主刷缠绕头发或异物导致卡住',
+      '充电底座接触不良或摆放位置不当',
+      '尘盒已满或滤网堵塞影响吸力'
+    ],
+    steps: [
+      '翻转机身，用干布擦拭底部四个悬崖传感器（小圆形透镜）和碰撞挡板',
+      '检查边刷和主刷，用小刀或剪刀清理缠绕的头发和纤维',
+      '确保充电底座放置在平坦硬质地面上，周围1米内无障碍物',
+      '取出尘盒清空，用水冲洗滤网后晾干再装回',
+      '在APP中检查固件是否有更新，更新后重置地图重新建图'
+    ],
+    needsRepair: false,
+    afterSales: '不同品牌的传感器清洁方式略有差异，详见说明书"日常维护"章节。扫地机器人的边刷建议每3-6个月更换一次，可在品牌官方渠道购买配件。'
+  },
+  '打印机': {
+    device: '打印机',
+    reasons: [
+      '墨盒/碳粉余量不足或安装不正确',
+      '打印头堵塞或喷嘴老化',
+      '纸张放置不规范或卡纸未清除',
+      '驱动程序或连接异常'
+    ],
+    steps: [
+      '检查打印机面板或电脑驱动中显示的墨量/碳粉余量',
+      '取出墨盒确认型号匹配且安装到位，听到"咔嗒"声表示卡紧',
+      '使用打印机自带的清洗功能（通常在设置→维护→清洗喷嘴），连续清洗2-3次',
+      '打开后盖检查是否有卡纸残留，取纸时沿走纸方向轻轻拉出',
+      'Mac用户：系统偏好设置→打印机→右键移除并重新添加；Windows：设置→设备→打印机→删除后重新安装驱动'
+    ],
+    needsRepair: false,
+    afterSales: '打印机常见问题90%可通过更换耗材和清洗喷嘴解决。墨盒型号在机身内壁或说明书"耗材信息"章节标注。'
+  },
+  '电饭煲': {
+    device: '电饭煲',
+    reasons: [
+      '内胆底部或发热盘有米粒或异物导致传热不良',
+      '温控传感器失灵或进水',
+      '盖子密封圈老化导致漏气',
+      '按键面板进水短路'
+    ],
+    steps: [
+      '拔掉电源，取出内胆，用湿布擦拭发热盘上的残留物和污渍，确保平整干净',
+      '检查内胆底部是否有变形或凹陷，变形会导致接触不良，需更换内胆',
+      '检查盖子密封圈是否老化开裂，如果漏气需要更换密封圈',
+      '待按键面板完全干燥后再尝试使用，如果仍然无反应，可能是面板进水损坏',
+      '如果以上无法解决，建议联系售后，不要自行拆卸电饭煲内部线路'
+    ],
+    needsRepair: true,
+    afterSales: '电饭煲内胆和密封圈属于易损件，可在品牌官方渠道购买更换。发热盘和温控传感器损坏需要专业维修，不建议自行操作。'
+  }
+};
+
+// ====== Off-topic detection ======
+var deviceKeywords = [
+  // Appliances
+  '空调', '洗衣机', '热水器', '咖啡机', '路由器', '冰箱', '电视', '微波炉', '烤箱', '吸尘器',
+  '净水器', '扫地机器人', '加湿器', '除湿机', '空气净化器', '电饭煲', '电磁炉', '油烟机',
+  '消毒柜', '洗碗机', '烘干机', '熨斗', '电风扇', '暖风机', '电暖器', '饮水机', '豆浆机',
+  '榨汁机', '电吹风', '电动牙刷',
+  // Smart home & security
+  '门锁', '智能锁', '摄像头', '监控', '智能音箱', '智能照明', '智能开关', '智能窗帘',
+  '智能马桶', '智能门铃', '传感器', '恒温器',
+  // Digital / IT
+  '路由器', '打印机', '扫描仪', 'NAS', '投影仪', '音箱', '音响', '耳机', '充电器', '数据线',
+  '显示器', '键盘', '鼠标', '笔记本', '电脑',
+  // Home & living
+  '乐高', '玩具', '家具', '拼装', '说明书', '物品', '床垫', '沙发', '窗帘', '地毯',
+  '锁', '门', '窗户', '水龙头', '花洒', '马桶', '浴霸', '地暖', '暖气', '新风',
+  '燃气灶', '灶', '油烟机', '橱柜', '燃气', '暖气片',
+  // Non-electric items that have manuals
+  '婴儿车', '安全座椅', '健身器材', '跑步机', '钢琴', '吉他', '自行车',
+  // Common problem keywords (always home-item related)
+  '设备', '故障', '维修', '不工作', '坏了', '报错', '代码',
+  '不制冷', '不加热', '不脱水', '不转', '漏水', '噪音',
+  '指示灯', '灯不亮', '亮', '灯', '按钮', '遥控', '打奶泡',
+  '制热', '除湿', '净化', '不启动', '不开机', '关机', '重启',
+  '异响', '卡住', '堵塞', '漏电', '跳闸', '断电', '没电', '没反应',
+  '闪烁', '黑屏', '死机', '卡顿', '过热', '发烫', '冒烟', '异味',
+  '安装', '拆卸', '清洗', '保养', '更换', '配件', '零件', '螺丝',
+  '电池', '充电', '续航', '连接', '配对', '蓝牙', 'WiFi', 'wifi', '网络',
+  '密码', '重置', '恢复出厂', '升级', '更新', '固件'
+];
+
+function isOffTopic(input) {
+  var text = input.toLowerCase();
+  for (var i = 0; i < deviceKeywords.length; i++) {
+    if (text.indexOf(deviceKeywords[i]) !== -1) {
+      return false;
+    }
+  }
+  return true;
+}
+
+// ====== Context-aware device inference ======
+// If the user's question is vague (e.g. "灯不亮"), try to infer the device
+// from the most recent conversation context
+function inferContext(input) {
+  var text = input.toLowerCase();
+  // Only activate for short, ambiguous questions (no explicit device keyword)
+  var hasExplicitDevice = false;
+  for (var i = 0; i < deviceKeywords.length; i++) {
+    if (deviceKeywords[i].length >= 2 && text.indexOf(deviceKeywords[i]) !== -1) {
+      // Skip generic problem keywords, only check device nouns
+      var genericWords = ['故障', '坏了', '报错', '不工作', '亮', '灯', '按钮', '不启动', '不开机', '关机', '重启', '异响', '卡住', '堵塞', '没电', '没反应', '黑屏', '死机', '卡顿', '过热', '发烫', '冒烟', '异味', '安装', '拆卸', '清洗', '保养', '更换', '充电', '连接', '配对'];
+      if (genericWords.indexOf(deviceKeywords[i]) === -1) {
+        hasExplicitDevice = true;
+        break;
+      }
+    }
+  }
+  if (hasExplicitDevice) return input; // already has a device, no need to infer
+
+  // Look at recent messages for a device context
+  var recentMsgs = document.querySelectorAll('.message.ai .device-tag');
+  if (recentMsgs.length > 0) {
+    var lastTag = recentMsgs[recentMsgs.length - 1].textContent;
+    // Extract device name (remove emoji prefix)
+    var deviceName = lastTag.replace(/^[^\s]+ /, '').split(' ')[0].split(' ')[0];
+    if (deviceName && text.length < 15) {
+      return deviceName + text;
+    }
+  }
+
+  // Also check user's recent messages for device mentions
+  var userMsgs = document.querySelectorAll('.message.user .bubble');
+  for (var j = userMsgs.length - 1; j >= 0; j--) {
+    var msgText = userMsgs[j].textContent.toLowerCase();
+    for (var k = 0; k < deviceKeywords.length; k++) {
+      var kw = deviceKeywords[k];
+      if (kw.length >= 2 && msgText.indexOf(kw) !== -1 && text.indexOf(kw) === -1) {
+        var genericWords2 = ['故障', '坏了', '报错', '不工作', '亮', '灯', '按钮', '不启动', '不开机', '关机', '重启', '异响', '卡住', '堵塞', '没电', '没反应', '黑屏', '死机', '卡顿', '过热', '发烫', '冒烟', '异味', '安装', '拆卸', '清洗', '保养', '更换', '充电', '连接', '配对'];
+        if (genericWords2.indexOf(kw) === -1) {
+          return kw + text;
+        }
+      }
+    }
+    if (j < userMsgs.length - 3) break; // only check last 3 user messages
+  }
+
+  return input;
+}
+
+// ====== Normalize input ======
+function normalizeInput(input) {
+  return input
+    .replace(/\s+/g, '')
+    .replace(/？/g, '')
+    .replace(/\?/g, '')
+    .replace(/。/g, '')
+    .replace(/，/g, '')
+    .replace(/！/g, '')
+    .replace(/怎么/g, '')
+    .replace(/什么/g, '')
+    .replace(/为什么/g, '')
+    .replace(/如何/g, '')
+    .replace(/了/g, '')
+    .replace(/吗/g, '')
+    .replace(/呢/g, '')
+    .replace(/啊/g, '')
+    .toLowerCase();
+}
+
+// ====== Find answer ======
+function findAnswer(input) {
+  var normalized = normalizeInput(input);
+
+  // 1. Exact match in knowledge base
+  var keys = Object.keys(knowledgeBase);
+  for (var i = 0; i < keys.length; i++) {
+    if (normalized.indexOf(keys[i]) !== -1 || keys[i].indexOf(normalized) !== -1) {
+      return knowledgeBase[keys[i]];
+    }
+  }
+
+  // 1.5. Partial match: input contains a device name from a knowledge base entry
+  // This handles follow-up questions like "缺件怎么办" after asking about LEGO
+  for (var i = 0; i < keys.length; i++) {
+    var entry = knowledgeBase[keys[i]];
+    var deviceName = entry.device;
+    // Normalize device name for matching
+    var normDevice = deviceName.replace(/了/g, '').replace(/的/g, '');
+    if (normalized.indexOf(normDevice) !== -1) {
+      return knowledgeBase[keys[i]];
+    }
+  }
+
+  // 2. Generic device diagnosis
+  var genericKeys = Object.keys(genericDiagnoses);
+  for (var j = 0; j < genericKeys.length; j++) {
+    var diag = genericDiagnoses[genericKeys[j]];
+    for (var k = 0; k < diag.keywords.length; k++) {
+      if (normalized.indexOf(diag.keywords[k]) !== -1) {
+        return diag;
+      }
+    }
+  }
+
+  // 3. Off-topic
+  if (isOffTopic(input)) {
+    return null;
+  }
+
+  // 4. Device-related but unknown
+  return 'unknown';
+}
+
+// Find a bound item matching the device name
+function findBoundItem(deviceName) {
+  for (var i = 0; i < state.myDevices.length; i++) {
+    var d = state.myDevices[i];
+    if (d.name.indexOf(deviceName) !== -1 || deviceName.indexOf(d.name) !== -1) {
+      return d;
+    }
+  }
+  return null;
+}
+
+// ====== Build Answer HTML ======
+function buildAnswerHTML(answer, question) {
+  if (!answer) {
+    // Off-topic
+    return '<div class="off-topic">抱歉，我是家庭说明书AI，专注于回答家里各种物品的使用问题。你可以试试问我"空调E3是什么意思"、"乐高说明书怎么看"或"咖啡机怎么打奶泡"。</div>';
+  }
+
+  if (answer === 'unknown') {
+    return '<div class="answer-section"><div class="section-title"><span class="icon">&#128269;</span> 问题分析</div>' +
+      '<p style="font-size:13px;color:#3A3A3C;margin-bottom:10px;">针对你描述的问题，建议按以下步骤排查：</p>' +
+      '<ol><li>关闭物品电源，等待1-2分钟后重新启动</li>' +
+      '<li>检查物品是否显示错误代码，记录下来以便查询</li>' +
+      '<li>确认物品电源连接正常，插座有电</li>' +
+      '<li>查看该物品的说明书中的故障排查章节</li>' +
+      '<li>若以上无法解决，建议联系品牌售后</li></ol></div>' +
+      '<div class="bind-prompt" onclick="navigateTo(\'devicePage\')">&#128218; 添加这件物品，我可以根据型号提供更准确的帮助</div>';
+  }
+
+  // Structured answer
+  var html = '<div class="ai-answer">';
+  // Check if user has this item bound with brand/model info
+  var matchedItem = findBoundItem(answer.device);
+  var tagText = answer.device;
+  if (matchedItem) {
+    var detail = [];
+    if (matchedItem.brand) detail.push(matchedItem.brand);
+    if (matchedItem.model) detail.push(matchedItem.model);
+    if (detail.length > 0) tagText = answer.device + ' ' + detail.join(' ');
+  }
+  html += '<div class="device-tag">&#128204; ' + tagText + '</div>';
+
+  html += '<div class="answer-section">';
+  html += '<div class="section-title"><span class="icon">&#128269;</span> 问题分析</div>';
+  html += '<ul>';
+  for (var i = 0; i < answer.reasons.length; i++) {
+    html += '<li>' + answer.reasons[i] + '</li>';
+  }
+  html += '</ul></div>';
+
+  html += '<div class="answer-section">';
+  html += '<div class="section-title"><span class="icon">&#128295;</span> 解决步骤</div>';
+  html += '<ol>';
+  for (var j = 0; j < answer.steps.length; j++) {
+    html += '<li>' + answer.steps[j] + '</li>';
+  }
+  html += '</ol></div>';
+
+  html += '<div class="answer-section">';
+  html += '<div class="section-title"><span class="icon">&#128214;</span> 来自你的说明书</div>';
+    var sourceText = answer.afterSales;
+    if (matchedItem && matchedItem.brand) {
+      sourceText = '来自你添加的「' + matchedItem.name + '」说明书。' + answer.afterSales;
+    }
+    html += '<div class="after-sales' + (answer.needsRepair ? ' danger' : '') + '">' + sourceText + '</div>';
+  html += '</div>';
+
+  html += '</div>';
+  return html;
+}
+
+// ====== Navigation ======
+function navigateTo(targetId, fromId) {
+  var target = document.getElementById(targetId);
+  if (!target) return;
+
+  if (fromId) {
+    currentPageFrom = fromId;
+  } else if (state.currentPageStack.length > 0) {
+    currentPageFrom = state.currentPageStack[state.currentPageStack.length - 1];
+  }
+
+  // Add current top to stack
+  if (state.currentPageStack[state.currentPageStack.length - 1] !== targetId) {
+    state.currentPageStack.push(targetId);
+  }
+
+  // Animate current page out
+  var currentId = state.currentPageStack[state.currentPageStack.length - 2] || 'chatPage';
+  var current = document.getElementById(currentId);
+  if (current) {
+    current.classList.add('slide-out-left');
+  }
+
+  // Show target
+  target.classList.add('active');
+
+  // Render device page if navigating to it
+  if (targetId === 'devicePage') {
+    renderDevicePage();
+  }
+
+  // Clear bind form if navigating to bind
+  if (targetId === 'bindPage') {
+    clearBindForm();
+  }
+}
+
+function navigateBack(pageId) {
+  var page = document.getElementById(pageId);
+  if (!page) return;
+
+  page.classList.remove('active');
+
+  var stack = state.currentPageStack;
+  stack.pop();
+
+  var previousId = stack[stack.length - 1] || 'chatPage';
+  var previous = document.getElementById(previousId);
+  if (previous) {
+    previous.classList.remove('slide-out-left');
+  }
+
+  if (previousId === 'devicePage') {
+    renderDevicePage();
+  }
+}
+
+// ====== Chat Functions ======
+function sendMessage() {
+  var input = document.getElementById('userInput');
+  var text = input.value.trim();
+  if (!text) return;
+
+  // Hide welcome chips
+  if (state.welcomeVisible) {
+    state.welcomeVisible = false;
+    var chips = document.getElementById('welcomeChips');
+    if (chips) {
+      chips.style.display = 'none';
+    }
+  }
+
+  // Add user message
+  addMessage('user', text);
+
+  // Clear input
+  input.value = '';
+  autoResize(input);
+  toggleSendBtn();
+
+  // Save to recent questions
+  saveRecentQuestion(text);
+
+  // Show loading
+  showLoading();
+
+  // Find and show answer
+  var delay = 800 + Math.random() * 700;
+  setTimeout(function() {
+    removeLoading();
+    var contextText = inferContext(text);
+    var answer = findAnswer(contextText);
+    var html = buildAnswerHTML(answer, text);
+    addMessage('ai', html);
+  }, delay);
+}
+
+function sendChip(chipEl) {
+  var text = chipEl.textContent;
+  // Remove leading emoji for clean question text
+  text = text.replace(/^[\u{1F000}-\u{1FFFF}\u{2600}-\u{27BF}\u{FE00}-\u{FE0F}\u{1F900}-\u{1F9FF}\s]+/u, '');
+  if (!text) text = chipEl.textContent; // fallback
+  document.getElementById('userInput').value = text;
+  sendMessage();
+}
+
+function addMessage(type, content) {
+  var area = document.getElementById('messagesArea');
+  var msg = document.createElement('div');
+  msg.className = 'message ' + type;
+
+  var bubble = document.createElement('div');
+  bubble.className = 'bubble';
+
+  if (type === 'ai' && content.indexOf('<') !== -1) {
+    bubble.innerHTML = content;
+  } else if (type === 'ai') {
+    bubble.textContent = content;
+  } else {
+    bubble.textContent = content;
+  }
+
+  msg.appendChild(bubble);
+  area.appendChild(msg);
+
+  // Scroll to bottom
+  setTimeout(function() {
+    area.scrollTop = area.scrollHeight;
+  }, 50);
+}
+
+function showLoading() {
+  var area = document.getElementById('messagesArea');
+  var msg = document.createElement('div');
+  msg.className = 'message ai';
+  msg.id = 'loadingMsg';
+
+  var bubble = document.createElement('div');
+  bubble.className = 'bubble';
+
+  var indicator = document.createElement('div');
+  indicator.className = 'loading-indicator';
+  indicator.innerHTML = '<div class="dot"></div><div class="dot"></div><div class="dot"></div><span class="loading-text">正在分析...</span>';
+
+  bubble.appendChild(indicator);
+  msg.appendChild(bubble);
+  area.appendChild(msg);
+
+  area.scrollTop = area.scrollHeight;
+}
+
+function removeLoading() {
+  var loading = document.getElementById('loadingMsg');
+  if (loading) {
+    loading.remove();
+  }
+}
+
+function handleInputKeydown(event) {
+  if (event.key === 'Enter' && !event.shiftKey) {
+    event.preventDefault();
+    sendMessage();
+  }
+}
+
+function autoResize(textarea) {
+  textarea.style.height = 'auto';
+  var newHeight = Math.min(textarea.scrollHeight, 100);
+  textarea.style.height = newHeight + 'px';
+}
+
+function toggleSendBtn() {
+  var btn = document.getElementById('sendBtn');
+  var input = document.getElementById('userInput');
+  if (input.value.trim()) {
+    btn.classList.remove('disabled');
+  } else {
+    btn.classList.add('disabled');
+  }
+}
+
+// ====== Device Page ======
+function renderDevicePage() {
+  var content = document.getElementById('deviceContent');
+  var clearBtn = document.getElementById('clearDataBtn');
+
+  if (state.myDevices.length === 0) {
+    content.innerHTML =
+      '<div class="empty-state">' +
+      '<div class="empty-icon">' +
+      '<svg width="80" height="80" viewBox="0 0 24 24" fill="none" stroke="#AEAEB2" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="20" height="14" rx="2" ry="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>' +
+      '</div>' +
+      '<div class="empty-title">你还没有添加物品</div>' +
+      '<div class="empty-desc">添加物品后可以获得更精准的使用帮助</div>' +
+      '<button class="btn-primary" onclick="navigateTo(\'bindPage\', \'devicePage\')">添加第一件物品</button>' +
+      '</div>';
+    clearBtn.style.display = 'none';
+  } else {
+    var html = '<div class="device-list">';
+    for (var i = 0; i < state.myDevices.length; i++) {
+      var d = state.myDevices[i];
+      var icon = getDeviceIcon(d.name);
+      var modelText = '';
+      if (d.brand || d.model) {
+        modelText = (d.brand ? d.brand : '') + (d.brand && d.model ? ' ' : '') + (d.model ? d.model : '');
+      } else {
+        modelText = '未设置品牌型号';
+      }
+      html += '<div class="device-card" onclick="askAboutDevice(' + i + ')" style="cursor:pointer;">' +
+        '<div class="device-icon">' + icon + '</div>' +
+        '<div class="device-info">' +
+        '<div class="device-name">' + escapeHTML(d.name) + '</div>' +
+        '<div class="device-model">' + escapeHTML(modelText) + '</div>' +
+        '</div>' +
+        '<button class="device-remove" onclick="removeDevice(' + i + ')" title="删除">' +
+        '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>' +
+        '</button>' +
+        '</div>';
+    }
+    html += '</div>';
+    content.innerHTML = html;
+    clearBtn.style.display = 'inline';
+  }
+}
+
+function askAboutDevice(index) {
+  var d = state.myDevices[index];
+  var question = d.name + '怎么使用';
+  // Map preset items to knowledge base questions for better demo
+  if (d.name.indexOf('空调') !== -1) question = '空调E3是什么意思';
+  else if (d.name.indexOf('咖啡') !== -1) question = '咖啡机怎么打奶泡';
+  else if (d.name.indexOf('乐高') !== -1 || d.name.indexOf('LEGO') !== -1) question = '乐高说明书怎么看';
+  else if (d.name.indexOf('热水') !== -1) question = '热水器不加热怎么办';
+  else if (d.name.indexOf('门锁') !== -1) question = '智能门锁电池怎么换';
+  else if (d.name.indexOf('路由') !== -1) question = '路由器怎么重置';
+  // Navigate back to chat first
+  navigateBack('devicePage');
+  setTimeout(function() {
+    document.getElementById('userInput').value = question;
+    sendMessage();
+  }, 350);
+}
+
+function getDeviceIcon(name) {
+  if (name.indexOf('空调') !== -1) return '&#10052;';
+  if (name.indexOf('洗衣机') !== -1) return '&#127854;';
+  if (name.indexOf('热水器') !== -1) return '&#128167;';
+  if (name.indexOf('咖啡') !== -1) return '&#9749;';
+  if (name.indexOf('路由') !== -1) return '&#128225;';
+  if (name.indexOf('冰箱') !== -1) return '&#129450;';
+  if (name.indexOf('电视') !== -1) return '&#128250;';
+  if (name.indexOf('微波') !== -1 || name.indexOf('烤箱') !== -1) return '&#128379;';
+  if (name.indexOf('乐高') !== -1) return '&#129516;';
+  if (name.indexOf('门锁') !== -1) return '&#128274;';
+  return '&#128268;';
+}
+
+function removeDevice(index) {
+  showModal('删除物品', '确定要删除"' + state.myDevices[index].name + '"吗？', function() {
+    state.myDevices.splice(index, 1);
+    saveState();
+    renderDevicePage();
+    showToast('物品已删除');
+  });
+}
+
+// ====== Bind Device ======
+function simulatePhotoRecognition() {
+  showToast('识别中...');
+  setTimeout(function() {
+    document.getElementById('bindDeviceName').value = '客厅空调';
+    document.getElementById('bindDeviceBrand').value = '美的';
+    document.getElementById('bindDeviceModel').value = 'KFR-35GW';
+    showToast('识别成功：客厅空调 美的 KFR-35GW');
+  }, 1000);
+}
+
+function clearBindForm() {
+  document.getElementById('bindDeviceName').value = '';
+  document.getElementById('bindDeviceBrand').value = '';
+  document.getElementById('bindDeviceModel').value = '';
+}
+
+function saveManualDevice() {
+  var name = document.getElementById('bindDeviceName').value.trim();
+  var brand = document.getElementById('bindDeviceBrand').value.trim();
+  var model = document.getElementById('bindDeviceModel').value.trim();
+
+  if (!name) {
+    showToast('请输入物品名称');
+    document.getElementById('bindDeviceName').focus();
+    return;
+  }
+
+  var device = {
+    name: name,
+    brand: brand,
+    model: model,
+    addedAt: Date.now()
+  };
+
+  state.myDevices.push(device);
+  saveState();
+
+  showToast('物品添加成功');
+  clearBindForm();
+
+  // Go back to device page
+  navigateBack('bindPage');
+}
+
+// ====== Clear Data ======
+function showClearDataModal() {
+  showModal('清除所有数据', '确定要清除所有物品和聊天记录吗？此操作不可撤销。', function() {
+    state.myDevices = [];
+    state.recentQuestions = [];
+    saveState();
+    renderDevicePage();
+    showToast('数据已清除');
+  });
+}
+
+// ====== Modal ======
+function showModal(title, message, callback) {
+  document.getElementById('modalTitle').textContent = title;
+  document.getElementById('modalMessage').textContent = message;
+  document.getElementById('modalOverlay').classList.add('active');
+  modalCallback = callback;
+}
+
+function closeModal() {
+  document.getElementById('modalOverlay').classList.remove('active');
+  modalCallback = null;
+}
+
+function confirmModal() {
+  if (modalCallback) {
+    modalCallback();
+  }
+  closeModal();
+}
+
+function closeModalOutside(event) {
+  if (event.target === document.getElementById('modalOverlay')) {
+    closeModal();
+  }
+}
+
+// ====== Toast ======
+function showToast(message) {
+  var toast = document.getElementById('toast');
+  toast.textContent = message;
+  toast.classList.add('active');
+
+  setTimeout(function() {
+    toast.classList.remove('active');
+  }, 2000);
+}
+
+// ====== Data Persistence ======
+function saveState() {
+  var data = {
+    myDevices: state.myDevices,
+    recentQuestions: state.recentQuestions
+  };
+  try {
+    localStorage.setItem('homeManualAI', JSON.stringify(data));
+  } catch (e) {
+    // Silently fail
+  }
+}
+
+function loadState() {
+  try {
+    // Clean up legacy data from old key
+    if (localStorage.getItem('deviceManagerMVP')) {
+      localStorage.removeItem('deviceManagerMVP');
+    }
+    var raw = localStorage.getItem('homeManualAI');
+    if (raw) {
+      var data = JSON.parse(raw);
+      state.myDevices = data.myDevices || [];
+      state.recentQuestions = data.recentQuestions || [];
+    }
+  } catch (e) {
+    // Silently fail
+  }
+}
+
+function saveRecentQuestion(question) {
+  // Remove duplicate
+  var idx = state.recentQuestions.indexOf(question);
+  if (idx !== -1) {
+    state.recentQuestions.splice(idx, 1);
+  }
+  state.recentQuestions.unshift(question);
+  if (state.recentQuestions.length > 3) {
+    state.recentQuestions = state.recentQuestions.slice(0, 3);
+  }
+  saveState();
+}
+
+// ====== Utility ======
+function escapeHTML(str) {
+  var div = document.createElement('div');
+  div.appendChild(document.createTextNode(str));
+  return div.innerHTML;
+}
+
+// ====== Init ======
+function init() {
+  loadState();
+  // Pre-populate demo items on first visit
+  if (state.myDevices.length === 0) {
+    state.myDevices = [
+      { name: '美的空调', brand: '美的', model: 'KFR-35GW', addedAt: Date.now() },
+      { name: '德龙咖啡机', brand: '德龙', model: 'EC685', addedAt: Date.now() },
+      { name: 'LEGO城堡', brand: 'LEGO', model: '10305', addedAt: Date.now() }
+    ];
+    saveState();
+  }
+  // Focus input on desktop
+  document.getElementById('userInput').addEventListener('focus', function() {
+    this.scrollIntoViewIfNeeded();
+  });
+  // Input bar focus glow effect
+  var inputBar = document.getElementById('inputBar');
+  var userInput = document.getElementById('userInput');
+  if (userInput && inputBar) {
+    userInput.addEventListener('focus', function() {
+      inputBar.classList.add('focused');
+    });
+    userInput.addEventListener('blur', function() {
+      inputBar.classList.remove('focused');
+    });
+  }
+}
+
+init();
+</script>
+</body>
+</html>
