@@ -368,14 +368,15 @@ body {
   backdrop-filter: blur(8px) saturate(140%);
   -webkit-backdrop-filter: blur(8px) saturate(140%);
   border: 1px solid rgba(255, 255, 255, 0.5);
-  padding: 8px 16px;
+  padding: 6px 12px;
   border-radius: 20px;
-  font-size: 13px;
+  font-size: 12px;
   color: #333;
   cursor: pointer;
   transition: var(--transition);
   user-select: none;
   box-shadow: 0 1px 3px rgba(0,0,0,0.04);
+  white-space: nowrap;
 }
 
 .welcome-chips .chip:hover {
@@ -595,6 +596,7 @@ body {
   backdrop-filter: blur(20px) saturate(180%);
   -webkit-backdrop-filter: blur(20px) saturate(180%);
   padding: 14px 16px;
+  padding-top: calc(env(safe-area-inset-top, 0px) + 14px);
   border-bottom: 0.5px solid rgba(0, 0, 0, 0.04);
   display: flex;
   align-items: center;
